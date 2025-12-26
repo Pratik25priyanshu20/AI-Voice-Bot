@@ -1,142 +1,81 @@
-# AI Voice Bot 🤖📞
+# AI Voice Bot
 
-An intelligent voice bot system that handles phone calls using AI, built with Twilio, Google Speech APIs, and Gemini LLM.
+An intelligent, cost-optimized voice bot that answers calls with Twilio, transcribes with Google Speech-to-Text, thinks with Gemini, and replies with Google Text-to-Speech via a FastAPI backend.
 
 ## Features
 
-- 📞 Real-time phone call handling via Twilio
-- �� Google Speech-to-Text for voice recognition
-- 🔊 Google Text-to-Speech for natural responses
-- 🤖 Gemini LLM for intelligent conversation
-- ⚡ FastAPI backend with WebSocket support
-- 🗄️ Database integration for call logging
-- 🚀 Ready for deployment (Railway/Render)
-
-## Tech Stack
-
-- **Telephony**: Twilio Voice API
-- **Speech**: Google Cloud Speech-to-Text & Text-to-Speech
-- **AI**: Google Gemini LLM
-- **Backend**: FastAPI + Python 3.11+
-- **Database**: SQLAlchemy (PostgreSQL/SQLite)
-- **Deployment**: Railway/Render compatible
+- Real-time phone handling via Twilio Media Streams
+- Google Speech-to-Text and Text-to-Speech integration
+- Gemini-powered conversational responses with tool calling hooks
+- FastAPI backend with WebSocket streaming
+- SQLAlchemy models ready for Postgres/SQLite logging
+- Deployment-ready for Railway/Render/Fly.io
 
 ## Project Structure
 ```
 ai-voice-bot/
-├── config/          # Configuration and prompts
+├── config/          # Settings and system prompts
 ├── src/
-│   ├── telephony/   # Twilio integration
-│   ├── speech/      # STT/TTS handling
-│   ├── ai/          # Gemini LLM integration
-│   ├── business/    # Business logic
-│   ├── database/    # Database models
-│   ├── utils/       # Utilities
-│   └── api/         # FastAPI application
-├── tests/           # Test suite
-├── scripts/         # Setup & testing scripts
-└── docs/            # Documentation
+│   ├── telephony/   # Twilio webhooks and media streams
+│   ├── speech/      # STT/TTS helpers
+│   ├── ai/          # Gemini client and conversation loop
+│   ├── business/    # Business logic + tool contracts
+│   ├── database/    # SQLAlchemy models and session
+│   ├── utils/       # Logging and helpers
+│   └── api/         # FastAPI entrypoints
+├── tests/           # Basic smoke tests
+├── scripts/         # Twilio setup and call testing
+└── docs/            # Setup and deployment notes
 ```
 
 ## Quick Start
 
 ### Prerequisites
+- Python 3.10+
+- Twilio account with a voice-enabled number
+- Google Cloud project with Speech-to-Text, Text-to-Speech, and Gemini API enabled
 
-- Python 3.11+
-- Twilio account
-- Google Cloud account (Speech & Gemini API enabled)
-
-### Installation
-
-1. Clone the repository
-```bash
-git clone https://github.com/yourusername/ai-voice-bot.git
-cd ai-voice-bot
-```
-
-2. Create virtual environment
+### Install and run
 ```bash
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
-
-3. Install dependencies
-```bash
 pip install -r requirements.txt
+cp .env.example .env  # fill in your keys
+uvicorn src.api.main:app --reload --port 8000
 ```
 
-4. Configure environment variables
+Expose your local server to Twilio during development:
 ```bash
-cp .env.example .env
-# Edit .env with your API keys
+ngrok http 8000
 ```
+Then point your Twilio number's voice webhook to `https://<ngrok-id>.ngrok.io/voice`.
 
-5. Run the application
-```bash
-uvicorn src.api.main:app --reload
-```
+## Environment Variables
+See `.env.example` for all settings:
+- Twilio: `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_PHONE_NUMBER`
+- Google: `GOOGLE_APPLICATION_CREDENTIALS`, `GOOGLE_PROJECT_ID`
+- Gemini: `GEMINI_API_KEY`
+- App: `ENVIRONMENT`, `DEBUG`, `LOG_LEVEL`, `DATABASE_URL`, `HOST`, `PORT`
 
-## Configuration
-
-Create a `.env` file with:
-```env
-# Twilio
-TWILIO_ACCOUNT_SID=your_account_sid
-TWILIO_AUTH_TOKEN=your_auth_token
-TWILIO_PHONE_NUMBER=your_twilio_number
-
-# Google Cloud
-GOOGLE_APPLICATION_CREDENTIALS=path/to/credentials.json
-GOOGLE_PROJECT_ID=your_project_id
-
-# Gemini
-GEMINI_API_KEY=your_gemini_api_key
-
-# Application
-ENVIRONMENT=development
-DATABASE_URL=sqlite:///./voice_bot.db
-```
-
-## Usage
-
-### Making a Test Call
-```bash
-python scripts/test_call.py
-```
-
-### Setting Up Twilio Webhook
-```bash
-python scripts/setup_twilio.py
-```
-
-## API Endpoints
-
-- `POST /webhook/voice` - Twilio voice webhook
-- `WS /ws/call/{call_sid}` - WebSocket for audio streaming
-- `GET /health` - Health check
+## API Surface
+- `POST /voice` — Twilio voice webhook (responds with TwiML to start media stream)
+- `POST /status` — Twilio status callback placeholder
+- `WS /ws/audio-stream/{call_sid}` — Media stream WebSocket endpoint
+- `GET /` — Basic health check
 
 ## Deployment
+Use the included `Procfile` for Railway/Render:
+```
+web: uvicorn src.api.main:app --host 0.0.0.0 --port ${PORT:-8000}
+```
+Add your environment variables in the platform dashboard and update your Twilio webhook to the deployed URL.
 
-See [docs/deployment.md](docs/deployment.md) for deployment instructions.
+## Testing
+```bash
+pytest
+```
 
-## Use Cases
-
-- 📞 Customer service automation
-- �� Appointment scheduling
-- 🎯 Lead qualification
-- 📢 Automated outreach campaigns
-- ℹ️ Information hotlines
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## License
-
-MIT License - see LICENSE file for details
-
-## Acknowledgments
-
-- Built with Twilio Voice API
-- Powered by Google Gemini & Cloud Speech
-- FastAPI framework
+## Next Steps
+- Wire real Google STT/TTS streaming in `src/speech/`
+- Implement Gemini tool execution against real business systems
+- Add persistence via `src/database/` and expand the test suite
